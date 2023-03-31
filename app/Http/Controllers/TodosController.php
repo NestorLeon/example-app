@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Models\Todo;
+use Illuminate\Support\Facades\DB;
 
 class TodosController extends Controller
 {
@@ -25,15 +27,20 @@ class TodosController extends Controller
 
         $this->validate(
             $request, 
-            ['title' => 'required|min:3'],
+            [
+                'title' => 'required|min:3',
+                'category_id' => 'required',
+            ],
             [
                 'title.required' => 'El campo título es obligatorio.',
-                'title.min' => 'El campo título debe tener más de 3 caracteres.'
+                'title.min' => 'El campo título debe tener más de 3 caracteres.',
+                'category_id.required' => 'Seleccione la categoría de la tarea.',
             ],
         );
 
         $todo = new Todo();
         $todo->title = $request->title;
+        $todo->category_id = $request->category_id;
         $todo->save();
 
         return redirect()->route('todos')->with('success', 'Tarea creada correctamente');
@@ -41,29 +48,41 @@ class TodosController extends Controller
 
     public function index()
     {
-        $todos = Todo::all();
-        return view('todos.index', ['todos' => $todos]);
+        $todos = DB::table('todos')
+                        ->select('todos.*', 'categories.color as category_color', 'categories.name as category_name')
+                        ->join('categories', 'todos.category_id', '=', 'categories.id')
+                        ->orderBy('categories.name')
+                        ->orderBy('todos.title')
+                        ->get();
+        $categories = DB::table('categories')->orderBy('name')->get();
+        return view('todos.index', ['todos' => $todos, 'categories' => $categories]);
     }
 
     public function show($id)
     {
         $todo = Todo::find($id);
-        return view('todos.show', ['todo' => $todo]);
+        $categories = DB::table('categories')->orderBy('name')->get();
+        return view('todos.show', ['todo' => $todo, 'categories' => $categories]);
     }
 
     public function update(Request $request,  $id)
     {
         $this->validate(
             $request, 
-            ['title' => 'required|min:3'],
+            [
+                'title' => 'required|min:3',
+                'category_id' => 'required',
+            ],
             [
                 'title.required' => 'El campo título es obligatorio.',
-                'title.min' => 'El campo título debe tener más de 3 caracteres.'
+                'title.min' => 'El campo título debe tener más de 3 caracteres.',
+                'category_id.required' => 'Seleccione la categoría de la tarea.',
             ],
         );
 
         $todo = Todo::find($id);
         $todo->title =  $request->title;
+        $todo->category_id =  $request->category_id;
         $todo->save();
         
         return redirect()->route('todos')->with('success', 'Tarea actualizada!');

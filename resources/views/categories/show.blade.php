@@ -21,5 +21,22 @@
             </div>
 
         </form>
+
+        <div class="container">
+            @if ($category->todos->count() > 0)
+                @foreach ($category->todos as $todo)
+                    <div class="row py-1">
+                        <div class="col-md-9 d-flex align-items-center">
+                            {{ $todo->title }}
+                        </div>
+                    </div>
+                @endforeach
+            @else
+                <p>
+                    No hay tareas en esta categoría.
+                </p>
+            @endif
+
+        </div>
     </div>
 @endsection

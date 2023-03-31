@@ -37,5 +37,34 @@
             </div>
 
         </form>
+        
+        <div class="container">
+            @if ($category->todos->count() > 0)
+                @foreach ($category->todos as $todo)
+                    <div class="row py-1">
+                        <div class="col-md-9 d-flex align-items-center">
+                            <a href="{{ route('todos-show', ['id' => $todo->id]) }}">
+                                {{ $todo->title }}
+                            </a>
+                        </div>
+
+                        <div class="col-md-3 d-flex justify-content-end">
+                            <form action="{{ route('todos-destroy', [$todo->id]) }}" 
+                                    method="POST">
+                                @method('DELETE')
+                                @csrf
+                                <button class="btn btn-danger btn-sm">Eliminar</button>
+                            </form>
+                        </div>
+
+                    </div>
+                @endforeach
+            @else
+                <p>
+                    No hay tareas en esta categoría.
+                </p>
+            @endif
+
+        </div>
     </div>
 @endsection

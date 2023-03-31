@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Http\Requests\UpdateCategoryRequest;
-use App\Http\Controllers\Rule;
 use App\Models\Category;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class CategoriesController extends Controller
 {
@@ -14,7 +15,16 @@ class CategoriesController extends Controller
      */
     public function index()
     {
-        $categories = Category::all();
+        //$categories = Category::all();
+
+        $categories = DB::table('categories')
+                        ->select('categories.*', DB::raw('count(todos.id) as cant_tareas'))
+                        ->leftJoin('todos', 'categories.id', '=', 'todos.category_id')
+                        ->groupBy('categories.id')
+                        ->orderBy('name')
+                        ->get();
+
+
         return view('categories.index', ['categories' => $categories]);
     }
 
@@ -84,9 +94,9 @@ class CategoriesController extends Controller
             $request, 
             [
                 'name' => [
-                            'required', 
-                            'unique:categories',
-                            //Rule::unique('categories')->ignore($category),
+                            'required',
+                            //'unique:categories,id,'.$category->id,
+                            Rule::unique('categories')->ignore($category->id),
                             'min:3',
                             'max:255',
                 ],
@@ -115,6 +125,11 @@ class CategoriesController extends Controller
     public function destroy(string $id)
     {
         $category = Category::find($id);
+
+        $category->todos()->each(function($todo){
+            $todo->delete();
+        });
+
         $category->delete();
         
         return redirect()->route('categories.index')->with('success', 'Categoría eliminada!');
